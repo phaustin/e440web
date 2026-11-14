@@ -1,0 +1,11 @@
+[workspace]
+authors = ["Phil Austin <paustin@eoas.ubc.ca>"]
+channels = ["conda-forge"]
+name = "e440web"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+gh-scoped-creds = ">=4.1,<5"
