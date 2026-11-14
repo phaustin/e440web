@@ -1,5 +1,5 @@
 services:
-  nginx:
+  e440web:
     image: nginx:alpine
     container_name: e440web
     restart: unless-stopped
@@ -7,16 +7,16 @@ services:
       - ./site:/usr/share/nginx/html:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=${TRAEFIK_NETWORK}"
-      - "traefik.http.routers.e440web.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.e440web.entrypoints=${TRAEFIK_ENTRYPOINT:-web}"
-      # Uncomment if Traefik has a TLS cert resolver configured:
-      # - "traefik.http.routers.e440web.tls.certresolver=${TRAEFIK_CERTRESOLVER}"
+      - traefik.http.routers.e440web.rule=Host(`dashboard.eoas.ubc.ca`) && (Path(`/e440`) || PathPrefix(`/e440/`))
+      - traefik.http.routers.e440web.tls=true
+      - traefik.http.routers.e440web.service=e440web
       - "traefik.http.services.e440web.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.e440-strip.stripprefix.prefixes=/e440"
+      - "traefik.http.routers.e440web.middlewares=e440-strip"
+     
     networks:
-      - traefik
+      - proxy_aug07
 
 networks:
-  traefik:
+  proxy_aug07:
     external: true
-    name: ${TRAEFIK_NETWORK}
