@@ -5,6 +5,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./site:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     labels:
       - "traefik.enable=true"
       - traefik.http.routers.e440web.rule=Host(`dashboard.eoas.ubc.ca`) && (Path(`/e440`) || PathPrefix(`/e440/`))

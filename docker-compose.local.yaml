@@ -1,0 +1,12 @@
+# Local preview of the built site.
+#   docker compose -f docker-compose.local.yaml up -d
+#   open http://localhost:8080
+name: e440web-local
+services:
+  e440web-local:
+    image: nginx:alpine
+    container_name: e440web-local
+    ports:
+      - "8080:80"
+    volumes:
+      - ./_build/html:/usr/share/nginx/html:ro
