@@ -1,0 +1,103 @@
+Session notes — 2026-11-15
+Debugging the /e440 path-prefix problem on https://dashboard.eoas.ubc.ca/e440
+==========================================================================
+
+USER
+----
+I am trying to debug a path prefix problem for the website at
+https://dashboard.eoas.ubc.ca/e440
+
+The website is built with jupyter-book version 2.1.7 using the command
+    BASE_URL=/e440 myst build --html
+with source material at https://github.com/phaustin/ClimateLaboratoryBook,
+and it runs behind traefik v3.6 using an nginx container defined in
+docker-compose.yaml and nginx.conf.
+
+The problem: the main page https://dashboard.eoas.ubc.ca/e440 looks good, and
+leaf pages like https://dashboard.eoas.ubc.ca/e440/glossary also work, but
+links that have child sublinks like https://dashboard.eoas.ubc.ca/e440/lectures/
+are linked wrongly on the main page, without the e440 prefix. Hovering over the
+link in index.html correctly shows https://dashboard.eoas.ubc.ca/e440/lectures,
+but clicking it goes to https://dashboard.eoas.ubc.ca/lectures, which gives a 404.
+
+
+CLAUDE — what I checked
+-----------------------
+- The link in site/index.html is correct: href="/e440/lectures".
+- On the live server, /e440/lectures and /e440/lectures/ return 200 straight
+  away, with no Location header. /lectures returns 404, as it should.
+- glossary/ and lectures/ have the same layout on disk (each is a folder
+  holding only index.html), so the server treats them the same way.
+- The build is React Router with ssr:true and basename "/e440/". In a static
+  build the MyST theme gives Link/NavLink the reloadDocument option, so
+  clicking a sidebar link is a normal full page load of /e440/lectures, not
+  routing in the browser. The click hits the server, and the server answers
+  correctly.
+- The Chrome browser tools were not available in this session, so I couldn't
+  reproduce the click in a real browser.
+
+
+CLAUDE — conclusion
+-------------------
+The server and the built HTML are both fine. My best explanation is that the
+browser has cached an old 301 redirect.
+
+Why a cached redirect fits: nginx.conf was only added in commit bf68838
+(Nov 14). Before that the container ran stock nginx. Stock nginx answers a
+request for a folder without its trailing slash (/lectures, after Traefik has
+stripped /e440) with a 301 to http://dashboard.eoas.ubc.ca/lectures/, which
+loses the prefix. Browsers keep 301s more or less forever. If Lectures was
+clicked before Nov 14 and Glossary wasn't, you'd see exactly this: the hover
+shows the right URL, but the browser jumps to the cached target without asking
+the server.
+
+The current nginx.conf settings (absolute_redirect off; try_files $uri
+$uri/index.html $uri.html =404) fix the server side, but they can't clear a
+redirect a browser has already cached.
+
+To confirm:
+  1. Open https://dashboard.eoas.ubc.ca/e440 in a private window and click
+     Lectures. It should work.
+  2. Or, in your normal window, open DevTools -> Network, tick "Disable cache",
+     and click again. If the cache is the cause, the request will show
+     "301 (from disk cache)".
+  3. To fix your normal browser, clear cached files (Chrome: Settings ->
+     Privacy -> Clear browsing data -> "Cached images and files").
+
+Anyone else who visited before Nov 14 will hit the same problem. If that
+matters, say for students, you could add a temporary Traefik route on
+dashboard.eoas.ubc.ca that sends /lectures and the other section paths on to
+/e440/...
+
+A separate bug I found: the theme's search box. Pressing Enter on a result runs
+window.location.href = url (useNavigateProvider in
+site/_assets/dist-L0z2u8h2.js). The static build doesn't give it a
+basename-aware navigate, so pressing Enter will probably drop /e440 too.
+Clicking a search result should be fine. That one is in the MyST theme and
+would need an upstream report.
+
+
+USER
+----
+How do I give you permission to use chrome-browser?
+
+CLAUDE
+------
+The Chrome tools never loaded in this session, so this isn't a permission
+prompt you missed. The extension simply isn't connected to Claude Code yet.
+  1. Install "Claude in Chrome" from the Chrome Web Store and sign in with the
+     same Claude account you use for Claude Code.
+  2. Type /chrome in Claude Code to enable and connect it, or restart Claude
+     Code with: claude --chrome
+  3. The first time I open dashboard.eoas.ubc.ca, the extension may ask whether
+     to allow it. Approve it in Chrome.
+Chrome needs to stay open while I use it. Once it's connected, I can open the
+site in a new tab, click Lectures, and check the network log for where the
+redirect comes from. The private-window test above is a quicker way to check
+without any setup.
+
+
+USER
+----
+Please write our dialog for this session into a text file for future reference.
+(-> this file)
