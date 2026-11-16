@@ -1,0 +1,26 @@
+
+I am trying to debug a path prefix problem for the website at
+
+https://https://dashboard.eoas.ubc.ca/e440
+
+The website is built with jupyter-book version 2.1.7 using the command
+
+BASE_URL=/e440 myst buiild --html
+
+and source material at https://github.com/phaustin/ClimateLaboratoryBook
+
+and runs behind traefik v 3.6 using an nginx container defined in docker-copose.yaml and nginx.conf
+
+
+The problem:
+
+The main page https://dashboard.eoas.ubc.ca/e440 looks good, and leaf pages like https://dashboard.eoas.ubc.ca/e440/glossary  also work
+
+but links that have child sublinks like
+
+https://dashboard.eoas.ubc.ca/e440/lectures/
+
+are incorrectly linked on the main page without the e440 prefix.  That is, the rollover on the index.html is coorectly displayed as https://dashboard.eoas.ubc.ca/e440/lectures
+but the link actually directs to https://dashboard.eoas.ubc.ca/lectures, which gives a 404
+
+
