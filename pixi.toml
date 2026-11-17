@@ -9,3 +9,7 @@ version = "0.1.0"
 
 [dependencies]
 gh-scoped-creds = ">=4.1,<5"
+jupyter = ">=1.1.1,<2"
+jupyterlab-myst = ">=2.7.0,<3"
+jupyter-book = ">=2.1.7,<3"
+mystmd = ">=1.13.0,<2"

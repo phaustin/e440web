@@ -3,3 +3,6 @@
 !.pixi/config.toml
 .env
 site/
+
+# MyST build outputs
+_build
